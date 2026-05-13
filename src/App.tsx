@@ -38,9 +38,8 @@ export default function App() {
   );
 
   // Helper: get sightings for the current user
-  // First-time users get the sample data so the app feels alive
   const sightings: Sighting[] = currentUser
-    ? (allSightings[currentUser.id] ?? SAMPLE_SIGHTINGS)
+    ? (allSightings[currentUser.id] ?? [])
     : [];
 
   // Helper: update sightings for the current user only
@@ -48,7 +47,7 @@ export default function App() {
     if (!currentUser) return;
     setAllSightings(prev => ({
       ...prev,
-      [currentUser.id]: updater(prev[currentUser.id] ?? SAMPLE_SIGHTINGS),
+      [currentUser.id]: updater(prev[currentUser.id] ?? []),
     }));
   }
 
@@ -60,10 +59,10 @@ export default function App() {
   function handleRegister(user: User) {
     setUsers(prev => [...prev, user]);
     setSessionId(user.id);
-    // New accounts start with sample data so the app isn't empty
+    // New accounts start with an empty log
     setAllSightings(prev => ({
       ...prev,
-      [user.id]: SAMPLE_SIGHTINGS,
+      [user.id]: [],
     }));
   }
 

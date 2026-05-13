@@ -31,6 +31,26 @@ const WEATHERS: Weather[] = [
 ];
 const CONFIDENCES: Confidence[] = ['certain', 'pretty sure', 'maybe', 'unknown'];
 
+const SILLY_MESSAGES = [
+  "🐱 Bold of you to submit a cat. Majestic creature, but not a bird.",
+  "🌳 That's a tree. Trees are lovely but they don't count.",
+  "🥤 A soda can? We appreciate the creativity. Zero birds detected.",
+  "🛸 Either this is very blurry or you've discovered something science can't explain.",
+  "🍕 That appears to be pizza. Delicious, but ornithologically useless.",
+  "🐟 Hmm. That's a fish. Fish cannot fly (we checked).",
+  "🤔 Our highly advanced algorithm sees zero birds. Lots of... whatever that is, though.",
+  "👟 A shoe! A new species? Nope. Just a shoe.",
+  "🌵 Cactus spotted. 0 wings. 0 beaks. 0 birds.",
+  "☁️ That's a cloud. Poetic, but not a bird.",
+  "🐸 Frog detected! Wonderful amphibian. Wrong app.",
+  "🧦 One sock. We have questions, but 'is this a bird?' isn't one of them.",
+  "🦖 Either this is a very old bird or you've found a dinosaur. Call a museum.",
+  "🌮 That's a taco. A beautiful, beautiful taco. Not a bird.",
+  "😂 We ran the analysis three times. Still not a bird. Still hilarious.",
+  "🪨 A rock. Rocks sit very still and never sing. Unlike birds.",
+  "🐶 Dog detected! Great companion. Terrible at flying.",
+];
+
 function nowLocal(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -60,6 +80,8 @@ export default function AddSighting({ sightings, onSave, editingSighting, onDone
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [sillyMsg, setSillyMsg] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Load editing data if provided
   useEffect(() => {
@@ -319,15 +341,65 @@ export default function AddSighting({ sightings, onSave, editingSighting, onDone
             </button>
           )}
 
-          {/* Coming soon: AI identification */}
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm ai-btn"
-            disabled
-            title="Coming soon — AI photo identification with Merlin-style integration"
-          >
-            🤖 Identify from Photo <span className="coming-soon-tag">Coming soon</span>
-          </button>
+          {/* AI identification — silly mode */}
+          {form.image && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm ai-btn"
+              disabled={aiLoading}
+              onClick={async () => {
+                setSillyMsg(null);
+                setAiLoading(true);
+                try {
+                  // Strip the "data:image/jpeg;base64," prefix for the API
+                  const [meta, imageData] = form.image.split(',');
+                  const mediaType = meta.replace('data:', '').replace(';base64', '') as
+                    'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+                  const res = await fetch('/.netlify/functions/identify-bird', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageData, mediaType }),
+                  });
+                  const data = await res.json();
+
+                  if (!res.ok || data.error) throw new Error(data.error || 'Unknown error');
+
+                  if (!data.isBird) {
+                    setSillyMsg(SILLY_MESSAGES[Math.floor(Math.random() * SILLY_MESSAGES.length)]);
+                  } else {
+                    // Auto-fill the form fields with Claude's answer
+                    set('commonName', data.commonName ?? '');
+                    set('scientificName', data.scientificName ?? '');
+                    set('confidence', data.confidence ?? 'maybe');
+                    if (data.notes || data.funFact) {
+                      set('idNotes', [data.notes, data.funFact].filter(Boolean).join(' '));
+                    }
+                    if (form.isMystery) set('isMystery', false);
+                    setSillyMsg(`✅ Identified as ${data.commonName}! Fields have been filled in — review and adjust as needed.`);
+                  }
+                } catch (err) {
+                  setSillyMsg('⚠️ Identification failed — check your connection and try again.');
+                  console.error(err);
+                } finally {
+                  setAiLoading(false);
+                }
+              }}
+            >
+              {aiLoading ? '🔍 Analysing...' : '🤖 Identify from Photo'}
+            </button>
+          )}
+          {!form.image && (
+            <button type="button" className="btn btn-ghost btn-sm ai-btn" disabled>
+              🤖 Identify from Photo <span className="coming-soon-tag">Upload a photo first</span>
+            </button>
+          )}
+          {sillyMsg && (
+            <div className={`silly-msg ${sillyMsg.startsWith('✅') ? 'silly-msg--success' : ''}`}>
+              <span>{sillyMsg}</span>
+              <button type="button" className="silly-msg-close" onClick={() => setSillyMsg(null)}>✕</button>
+            </div>
+          )}
         </div>
 
         {/* Colors */}

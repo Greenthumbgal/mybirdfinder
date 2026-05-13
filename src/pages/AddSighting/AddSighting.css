@@ -145,6 +145,9 @@
 
 .ai-btn {
   margin-top: 10px;
+}
+
+.ai-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -158,6 +161,44 @@
   margin-left: 6px;
   color: var(--text-muted);
 }
+
+/* ── Silly non-bird message ──────────────────────────────── */
+.silly-msg {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #fff8e1, #fff3e0);
+  border: 1.5px solid #ffcc02;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #5d4037;
+  animation: slideDown 0.3s ease;
+}
+
+.silly-msg-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #a1887f;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.silly-msg-close:hover { color: #5d4037; }
+
+.silly-msg--success {
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  border-color: #66bb6a;
+  color: #2e7d32;
+}
+
+.silly-msg--success .silly-msg-close { color: #81c784; }
+.silly-msg--success .silly-msg-close:hover { color: #2e7d32; }
 
 /* ── Color picker ────────────────────────────────────── */
 .color-picker {
